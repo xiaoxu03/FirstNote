@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Firstnote</string>
+    <string name="settings">settings</string>
+    <string name="note_zh">笔记</string>
+    <string name="todo_zh">待办</string>
+    <string name="new_note">新建</string>
+    <string name="edit">编辑</string>
+    <string name="finish">完成</string>
+</resources>
