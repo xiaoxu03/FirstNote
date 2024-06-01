@@ -6,4 +6,12 @@
     <string name="new_note">新建</string>
     <string name="edit">编辑</string>
     <string name="finish">完成</string>
+    <string name="note">笔记</string>
+    <string name="folder">文件夹</string>
+    <string name="delete">删除</string>
+    <string name="cancel">取消</string>
+    <string name="confirm">确定</string>
+    <string name="title">标题</string>
+    <string name="content">内容</string>
+    <string name="note_empty">没有笔记</string>
 </resources>

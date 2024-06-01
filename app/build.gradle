@@ -44,4 +44,19 @@ dependencies {
     implementation 'androidx.recyclerview:recyclerview:1.2.1'
     implementation 'com.google.android.material:material:1.4.0'
     implementation 'com.github.bumptech.glide:glide:4.12.0'
+
+    //热门强大的图片加载器
+    implementation 'com.github.bumptech.glide:glide:4.8.0'
+    annotationProcessor 'com.github.bumptech.glide:compiler:4.8.0'
+    //RecyclerView适配器
+    implementation 'com.github.CymChad:BaseRecyclerViewAdapterHelper:2.9.50'
+    //绑定视图
+    implementation 'com.jakewharton:butterknife:10.2.3'
+    annotationProcessor 'com.jakewharton:butterknife-compiler:10.2.3'
+    //下拉刷新
+    implementation  'com.scwang.smart:refresh-layout-kernel:2.0.3'  //核心必须依赖
+    implementation  'com.scwang.smart:refresh-header-classics:2.0.3'
+    //富文本编辑器
+    implementation 'jp.wasabeef:richeditor-android:2.0.0'
+
 }
