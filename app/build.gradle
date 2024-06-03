@@ -58,5 +58,8 @@ dependencies {
     implementation  'com.scwang.smart:refresh-header-classics:2.0.3'
     //富文本编辑器
     implementation 'jp.wasabeef:richeditor-android:2.0.0'
-
+    //okhttp
+    implementation 'com.squareup.okhttp3:okhttp:4.9.1'
+    //gson
+    implementation 'com.google.code.gson:gson:2.8.6'
 }

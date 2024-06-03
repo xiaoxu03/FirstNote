@@ -14,4 +14,7 @@
     <string name="title">标题</string>
     <string name="content">内容</string>
     <string name="note_empty">没有笔记</string>
+    <string name="settings_title">设置</string>
+    <string name="signing">个性签名</string>
+    <string name="change">更改</string>
 </resources>

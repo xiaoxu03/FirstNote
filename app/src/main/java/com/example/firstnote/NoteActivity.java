@@ -21,6 +21,7 @@ public class NoteActivity extends AppCompatActivity {
     ImageButton insertVideoButton;
     ImageButton insertImageButton;
     ImageButton insertAudioButton;
+    ImageButton getHtmlButton;
     RichEditor mEditor;
 
     String[] mPermissionList = new String[]{
@@ -63,6 +64,16 @@ public class NoteActivity extends AppCompatActivity {
             public void onClick(View v) {
                 mEditor.focusEditor();
                 ActivityCompat.requestPermissions(NoteActivity.this, mPermissionList, REQUEST_AUDIO_GET);
+            }
+        });
+
+        getHtmlButton = findViewById(R.id.get_html);
+
+        getHtmlButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String html = mEditor.getHtml();
+                Log.d("html", html);
             }
         });
     }

@@ -16,7 +16,7 @@
         app:layout_constraintTop_toTopOf="parent">
 
         <ImageButton
-            android:id="@+id/imageButton"
+            android:id="@+id/back_button"
             android:layout_width="60dp"
             android:layout_height="60dp"
             android:layout_weight="1"
@@ -97,6 +97,13 @@
                 android:layout_height="60dp"
                 android:layout_weight="1"
                 app:srcCompat="@android:drawable/presence_audio_online" />
+
+            <ImageButton
+                android:id="@+id/get_html"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:layout_weight="1"
+                app:srcCompat="@drawable/html_edit" />
         </LinearLayout>
     </HorizontalScrollView>
 

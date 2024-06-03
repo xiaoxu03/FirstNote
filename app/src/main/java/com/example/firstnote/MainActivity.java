@@ -1,14 +1,18 @@
 package com.example.firstnote;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
-import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -17,13 +21,26 @@ import androidx.viewpager2.widget.ViewPager2;
 
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.Response;
 
 public class MainActivity extends AppCompatActivity {
     ViewPager2 mainViewPager2;
     TabLayout tl;
+    //获取笔记列表
+    List<Note> noteList = new ArrayList<Note>();
+    static final int GET_NOTE_LIST = 100;
 
     private final List<Fragment> fragments = new ArrayList<>();
     @Override
@@ -61,5 +78,88 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         tab.attach();
+        getNoteList();
+    }
+
+    public void getNoteList() {
+        SharedPreferences sharedPreferences = getSharedPreferences("user", MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        int user_id = sharedPreferences.getInt("user_id", -1);
+        editor.apply();
+        if (user_id == -1) {
+            //未登录
+            return;
+        }
+        //获取笔记列表
+        ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.INTERNET}, GET_NOTE_LIST);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == GET_NOTE_LIST) {
+            if (grantResults.length > 0 && grantResults[0] == 0) {
+                // Permission granted
+                SharedPreferences sharedPreferences = getSharedPreferences("user", MODE_PRIVATE);
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                int user_id = sharedPreferences.getInt("user_id", -1);
+                editor.apply();
+
+                // okhttp GET
+                okhttp3.OkHttpClient client = new okhttp3.OkHttpClient();
+                okhttp3.Request request = new okhttp3.Request.Builder().url(API.API_root + "/notes/" + user_id).get().build();
+                try {
+                    client.newCall(request).enqueue(
+                            new Callback() {
+                                @Override
+                                public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                                    Log.e("error", e.toString());
+                                    Toast.makeText(MainActivity.this, "获取信息失败", Toast.LENGTH_SHORT).show();
+                                }
+
+                                @Override
+                                public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                                    if (response.isSuccessful()) {
+                                        runOnUiThread(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                try {
+                                                    assert response.body() != null;
+                                                    String responseData = response.body().string();
+                                                    JSONObject jsonObject = new JSONObject(responseData);
+                                                    String array = jsonObject.getString("array");
+                                                    Gson gson = new Gson();
+                                                    Type type = new TypeToken<List<Note>>() {
+                                                    }.getType();
+                                                    noteList = gson.fromJson(array, type);
+                                                    for (Note note : noteList) {
+                                                        Log.d("note_title", note.title);
+                                                    }
+                                                } catch (Exception e) {
+                                                    Log.e("error", e.toString());
+                                                    Toast.makeText(MainActivity.this, "获取信息失败", Toast.LENGTH_SHORT).show();
+                                                }
+                                            }
+                                        });
+                                    } else {
+                                        runOnUiThread(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                Toast.makeText(MainActivity.this, "获取信息失败:" + response.code(), Toast.LENGTH_SHORT).show();
+                                            }
+                                        });
+                                    }
+                                }
+                            }
+                    );
+                } catch (Exception e) {
+                    Log.e("error", e.toString());
+                    Toast.makeText(this, "网络请求失败", Toast.LENGTH_SHORT).show();
+                }
+            } else {
+                // Permission denied
+                Toast.makeText(this, "无法访问网络", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 }

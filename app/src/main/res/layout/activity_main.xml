@@ -41,7 +41,7 @@
     </androidx.viewpager2.widget.ViewPager2>
 
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/constraintLayout"
+        android:id="@+id/header_layout"
         android:layout_width="0dp"
         android:layout_height="60dp"
         android:background="@color/white"
