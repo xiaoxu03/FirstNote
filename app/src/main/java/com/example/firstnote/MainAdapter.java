@@ -31,4 +31,7 @@ public class MainAdapter extends FragmentStateAdapter {
         return fragments.size();
     }
 
+    public Fragment getFragment(int position) {
+        return fragments.get(position);
+    }
 }

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="#EDD5FF"/> <!-- 背景颜色 -->
+    <corners android:radius="20dp"/> <!-- 圆角半径 -->
+    <padding android:top="10dp" android:bottom="10dp" android:left="10dp" android:right="10dp"/> <!-- 内边距 -->
+</shape>

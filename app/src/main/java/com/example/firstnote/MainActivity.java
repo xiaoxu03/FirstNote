@@ -23,6 +23,7 @@ import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.scwang.smart.refresh.layout.api.RefreshHeader;
 
 import org.json.JSONObject;
 
@@ -40,6 +41,7 @@ public class MainActivity extends AppCompatActivity {
     TabLayout tl;
     //获取笔记列表
     List<Note> noteList = new ArrayList<Note>();
+    RefreshHeader refreshHeader;
     static final int GET_NOTE_LIST = 100;
 
     private final List<Fragment> fragments = new ArrayList<>();
@@ -79,6 +81,16 @@ public class MainActivity extends AppCompatActivity {
         });
         tab.attach();
         getNoteList();
+
+        MainAdapter adapter = (MainAdapter) mainViewPager2.getAdapter();
+        if (adapter != null) {
+            NoteFragment fragment = (NoteFragment) adapter.getFragment(0);
+            if (fragment != null) {
+                // Call the method
+                // 获取refresh
+
+            }
+        }
     }
 
     public void getNoteList() {
@@ -132,8 +144,14 @@ public class MainActivity extends AppCompatActivity {
                                                     Type type = new TypeToken<List<Note>>() {
                                                     }.getType();
                                                     noteList = gson.fromJson(array, type);
-                                                    for (Note note : noteList) {
-                                                        Log.d("note_title", note.title);
+                                                    Log.d("NoteFragment", "initMainNoteList: " + noteList.size());
+                                                    MainAdapter adapter = (MainAdapter) mainViewPager2.getAdapter();
+                                                    if (adapter != null) {
+                                                        NoteFragment fragment = (NoteFragment) adapter.getFragment(0);
+                                                        if (fragment != null) {
+                                                            // Call the method
+                                                            fragment.initNoteList(noteList);
+                                                        }
                                                     }
                                                 } catch (Exception e) {
                                                     Log.e("error", e.toString());

@@ -27,6 +27,7 @@
         app:layout_constraintTop_toTopOf="parent">
 
         <LinearLayout
+            android:id="@+id/empty_text"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:gravity="center"
@@ -50,18 +51,21 @@
 
         <!--没有数据时，下拉重新添加数据-->
         <com.scwang.smart.refresh.layout.SmartRefreshLayout
-            android:id="@+id/refreshLayout"
+            android:id="@+id/refresh_layout"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
+
             <com.scwang.smart.refresh.header.ClassicsHeader
+                android:id="@+id/refresh_header"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"/>
+                android:layout_height="wrap_content" />
+
             <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/recyclerView"
+                android:id="@+id/note_list"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:overScrollMode="never"
-                android:background="#fff" />
+                android:background="#fff"
+                android:overScrollMode="never" />
         </com.scwang.smart.refresh.layout.SmartRefreshLayout>
 
     </RelativeLayout>
