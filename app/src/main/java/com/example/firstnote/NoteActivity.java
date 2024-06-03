@@ -3,6 +3,7 @@ package com.example.firstnote;
 import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
@@ -15,7 +16,19 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 import jp.wasabeef.richeditor.RichEditor;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.OkHttpClient;
+import okhttp3.Response;
+
+import android.widget.TextView;
 import android.widget.Toast;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.util.Objects;
 
 public class NoteActivity extends AppCompatActivity {
     ImageButton insertVideoButton;
@@ -23,7 +36,7 @@ public class NoteActivity extends AppCompatActivity {
     ImageButton insertAudioButton;
     ImageButton getHtmlButton;
     RichEditor mEditor;
-
+    TextView titleText;
     String[] mPermissionList = new String[]{
             Manifest.permission.READ_MEDIA_IMAGES,
             Manifest.permission.READ_MEDIA_VIDEO,
@@ -37,6 +50,9 @@ public class NoteActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_note);
+
+        Intent intent = getIntent();
+        String title = intent.getStringExtra("title");
 
         insertImageButton = findViewById(R.id.insert_image_button);
         insertVideoButton = findViewById(R.id.insert_video_button);
@@ -68,6 +84,7 @@ public class NoteActivity extends AppCompatActivity {
         });
 
         getHtmlButton = findViewById(R.id.get_html);
+        titleText = findViewById(R.id.title_text);
 
         getHtmlButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -76,6 +93,55 @@ public class NoteActivity extends AppCompatActivity {
                 Log.d("html", html);
             }
         });
+
+        // okhttp DELETE
+        SharedPreferences sharedPreferences = getSharedPreferences("user", 0);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        okhttp3.OkHttpClient client = new okhttp3.OkHttpClient();
+        int user_id = sharedPreferences.getInt("user_id", -1);
+        editor.apply();
+        okhttp3.Request request = new okhttp3.Request.Builder()
+                .url(API.API_root + "/note/"+user_id+"/"+title)
+                .get()
+                .build();
+        try {
+            client.newCall(request).enqueue(
+                    new Callback() {
+                        @Override
+                        public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                            Log.e("get_error", e.toString());
+                        }
+
+                        @Override
+                        public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                            if (response.isSuccessful()) {
+                                try {
+                                    assert response.body() != null;
+                                    JSONObject jsonObject = new JSONObject(response.body().string());
+
+                                    if (jsonObject.has("note_content")){
+                                        String content = jsonObject.getString("note_content");
+                                        runOnUiThread(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                titleText.setText(title);
+                                                mEditor.setHtml(content);
+                                            }
+                                        });
+                                    }
+
+                                } catch (JSONException e) {
+                                    throw new RuntimeException(e);
+                                }
+                            } else {
+                                Log.e("get_error", Objects.requireNonNull(response.body()).string());
+                            }
+                        }
+                    }
+            );
+        } catch (Exception e) {
+            Log.e("get_error", e.toString());
+        }
     }
 
     @Override

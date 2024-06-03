@@ -9,7 +9,7 @@
     android:background="@drawable/note_item_background">
 
     <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/constraintLayout"
+        android:id="@+id/note_layout"
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:visibility="visible"

@@ -1,6 +1,7 @@
 package com.example.firstnote;
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.util.Log;
 import android.view.View;
@@ -18,6 +19,9 @@ import com.bumptech.glide.load.resource.bitmap.CircleCrop;
 import com.bumptech.glide.request.RequestOptions;
 import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.chad.library.adapter.base.BaseViewHolder;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.List;
@@ -81,6 +85,19 @@ public class NoteAdapter extends BaseQuickAdapter<Note, BaseViewHolder>{
                     } catch (Exception e) {
                         Log.e("delete_error", e.toString());
                     }
+                }
+            }
+        });
+        helper.getView(R.id.note_layout).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //跳转到笔记详情页面
+                int position = helper.getAdapterPosition();
+                Note note = getItem(position);
+                if (note != null) {
+                    Intent intent = new Intent(mContext, NoteActivity.class);
+                    intent.putExtra("title", note.title);
+                    mContext.startActivity(intent);
                 }
             }
         });
