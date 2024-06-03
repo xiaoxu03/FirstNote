@@ -44,6 +44,8 @@ public class NoteFragment extends Fragment {
         });
     }
 
-
+    public void initNoteList(List<Note> noteList) {
+        
+    }
 
 }
