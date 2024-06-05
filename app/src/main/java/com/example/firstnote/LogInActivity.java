@@ -51,26 +51,17 @@ public class LogInActivity extends AppCompatActivity {
         go_register = findViewById(R.id.go_register_button);
 
         back.setOnClickListener(v -> finish());
-        submit.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // Request permissions
-                ActivityCompat.requestPermissions(LogInActivity.this, new String[]{Manifest.permission.INTERNET}, REQUEST_INTERNET);
-            }
+        submit.setOnClickListener(v -> {
+            // Request permissions
+            ActivityCompat.requestPermissions(LogInActivity.this, new String[]{Manifest.permission.INTERNET}, REQUEST_INTERNET);
         });
-        go_reset.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(LogInActivity.this, ResetPasswordActivity.class);
-                startActivity(intent);
-            }
+        go_reset.setOnClickListener(v -> {
+            Intent intent = new Intent(LogInActivity.this, ResetPasswordActivity.class);
+            startActivity(intent);
         });
-        go_register.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(LogInActivity.this, RegisterActivity.class);
-                startActivity(intent);
-            }
+        go_register.setOnClickListener(v -> {
+            Intent intent = new Intent(LogInActivity.this, RegisterActivity.class);
+            startActivity(intent);
         });
         usernameEditText = findViewById(R.id.username_input);
         passwordEditText = findViewById(R.id.password_input);
@@ -103,39 +94,31 @@ public class LogInActivity extends AppCompatActivity {
                                 @Override
                                 public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
                                     if (response.isSuccessful()) {
-                                        runOnUiThread(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                Toast.makeText(LogInActivity.this, "登录成功", Toast.LENGTH_SHORT).show();
-                                                try {
-                                                    assert response.body() != null;
-                                                    JSONObject jsonObject = new JSONObject(response.body().string());
-                                                    int user_id = jsonObject.getInt("user_id");
+                                        runOnUiThread(() -> {
+                                            Toast.makeText(LogInActivity.this, "登录成功", Toast.LENGTH_SHORT).show();
+                                            try {
+                                                assert response.body() != null;
+                                                JSONObject jsonObject = new JSONObject(response.body().string());
+                                                int user_id = jsonObject.getInt("user_id");
 
-                                                    SharedPreferences sharedPreferences = getSharedPreferences("user", MODE_PRIVATE);
-                                                    SharedPreferences.Editor editor = sharedPreferences.edit();
+                                                SharedPreferences sharedPreferences = getSharedPreferences("user", MODE_PRIVATE);
+                                                SharedPreferences.Editor editor = sharedPreferences.edit();
 
-                                                    editor.putString("username", username);
-                                                    editor.putInt("user_id", user_id);
-                                                    editor.apply();
-                                                    new Handler().postDelayed(new Runnable() {
-                                                        @Override
-                                                        public void run() {
-                                                            finish();
-                                                        }
-                                                    }, 1000); // 延迟1秒
-                                                } catch (JSONException | IOException e) {
-                                                    throw new RuntimeException(e);
-                                                }
+                                                editor.putString("username", username);
+                                                editor.putInt("user_id", user_id);
+                                                editor.apply();
+                                                new Handler().postDelayed(new Runnable() {
+                                                    @Override
+                                                    public void run() {
+                                                        finish();
+                                                    }
+                                                }, 1000); // 延迟1秒
+                                            } catch (JSONException | IOException e) {
+                                                throw new RuntimeException(e);
                                             }
                                         });
                                     } else {
-                                        runOnUiThread(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                Toast.makeText(LogInActivity.this, "登录失败:" + response.code(), Toast.LENGTH_SHORT).show();
-                                            }
-                                        });
+                                        runOnUiThread(() -> Toast.makeText(LogInActivity.this, "登录失败:" + response.code(), Toast.LENGTH_SHORT).show());
                                     }
                                 }
                             }

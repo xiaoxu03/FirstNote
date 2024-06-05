@@ -3,15 +3,20 @@ package com.example.firstnote;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.BaseAdapter;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.os.HandlerKt;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -35,11 +40,14 @@ import okhttp3.Response;
 public class NoteAdapter extends BaseQuickAdapter<Note, BaseViewHolder>{
     private static final int STATE_DEFAULT = 0;
     int mEditMode = STATE_DEFAULT;
+    Runnable runnable;
+    Handler handler = new Handler();
 
     public NoteAdapter(int layoutResId, @Nullable List<Note> noteList) {
         super(layoutResId, noteList);
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void convert(@NonNull BaseViewHolder helper, Note item) {
         helper.setText(R.id.title_text, item.title);
@@ -54,6 +62,10 @@ public class NoteAdapter extends BaseQuickAdapter<Note, BaseViewHolder>{
                 Note note = getItem(position);
                 if (note != null) {
                     remove(position);
+                    if (runnable != null) {
+                        // 移除之前的Runnable
+                        handler.removeCallbacks(runnable);
+                    }
                     // okhttp DELETE
                     SharedPreferences sharedPreferences = mContext.getSharedPreferences("user", 0);
                     SharedPreferences.Editor editor = sharedPreferences.edit();
@@ -99,6 +111,30 @@ public class NoteAdapter extends BaseQuickAdapter<Note, BaseViewHolder>{
                     intent.putExtra("title", note.title);
                     mContext.startActivity(intent);
                 }
+            }
+        });
+        helper.getView(R.id.note_layout).setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                ImageButton delete_button = helper.getView(R.id.delete_button);
+                Animation fadeIn = AnimationUtils.loadAnimation(helper.itemView.getContext(), R.anim.fade_in);
+                delete_button.startAnimation(fadeIn);
+                delete_button.setVisibility(View.VISIBLE);
+
+                Handler handler = new Handler();
+                 runnable = new Runnable() {
+                    @Override
+                    public void run() {
+                        // 在Runnable中，设置按钮的可见性为View.GONE
+                        Animation fadeOut = AnimationUtils.loadAnimation(helper.itemView.getContext(), R.anim.fade_out);
+                        delete_button.startAnimation(fadeOut);
+                        delete_button.setVisibility(View.GONE);
+                    }
+                };
+
+                // 使用Handler的postDelayed方法来在3秒后执行Runnable
+                handler.postDelayed(runnable, 3000);
+                return true;
             }
         });
     }

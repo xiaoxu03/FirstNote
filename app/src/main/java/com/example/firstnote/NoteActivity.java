@@ -1,25 +1,42 @@
 package com.example.firstnote;
 
+import static android.os.Environment.getExternalStorageDirectory;
+
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
+import android.os.FileUtils;
+import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageButton;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 import jp.wasabeef.richeditor.RichEditor;
 import okhttp3.Call;
 import okhttp3.Callback;
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
 import okhttp3.Response;
+import okhttp3.internal.Util;
+import okio.BufferedSink;
+import okio.ByteString;
+import okio.Okio;
+import okio.Source;
 
 import android.widget.TextView;
 import android.widget.Toast;
@@ -27,7 +44,9 @@ import android.widget.Toast;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Objects;
 
 public class NoteActivity extends AppCompatActivity {
@@ -37,6 +56,9 @@ public class NoteActivity extends AppCompatActivity {
     ImageButton getHtmlButton;
     RichEditor mEditor;
     TextView titleText;
+    boolean isSync = true;
+    Handler handler = new Handler();
+    Runnable syncRunnable;
     String[] mPermissionList = new String[]{
             Manifest.permission.READ_MEDIA_IMAGES,
             Manifest.permission.READ_MEDIA_VIDEO,
@@ -46,6 +68,8 @@ public class NoteActivity extends AppCompatActivity {
     static final int REQUEST_IMAGE_GET = 100;
     static final int REQUEST_VIDEO_GET = 101;
     static final int REQUEST_AUDIO_GET = 102;
+    private static final MediaType MEDIA_TYPE_OCTET_STREAM = MediaType.parse("application/octet-stream");
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -94,7 +118,7 @@ public class NoteActivity extends AppCompatActivity {
             }
         });
 
-        // okhttp DELETE
+        // okhttp GET
         SharedPreferences sharedPreferences = getSharedPreferences("user", 0);
         SharedPreferences.Editor editor = sharedPreferences.edit();
         okhttp3.OkHttpClient client = new okhttp3.OkHttpClient();
@@ -106,42 +130,55 @@ public class NoteActivity extends AppCompatActivity {
                 .build();
         try {
             client.newCall(request).enqueue(
-                    new Callback() {
-                        @Override
-                        public void onFailure(@NonNull Call call, @NonNull IOException e) {
-                            Log.e("get_error", e.toString());
-                        }
+                new Callback() {
+                    @Override
+                    public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                        Log.e("get_error", e.toString());
+                    }
 
-                        @Override
-                        public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
-                            if (response.isSuccessful()) {
-                                try {
-                                    assert response.body() != null;
-                                    JSONObject jsonObject = new JSONObject(response.body().string());
+                    @Override
+                    public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                        if (response.isSuccessful()) {
+                            try {
+                                assert response.body() != null;
+                                JSONObject jsonObject = new JSONObject(response.body().string());
 
-                                    if (jsonObject.has("note_content")){
-                                        String content = jsonObject.getString("note_content");
-                                        runOnUiThread(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                titleText.setText(title);
-                                                mEditor.setHtml(content);
-                                            }
-                                        });
-                                    }
-
-                                } catch (JSONException e) {
-                                    throw new RuntimeException(e);
+                                if (jsonObject.has("note_content")){
+                                    String content = jsonObject.getString("note_content");
+                                    runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            titleText.setText(title);
+                                            mEditor.setHtml(content);
+                                            isSync = false;
+                                        }
+                                    });
                                 }
-                            } else {
-                                Log.e("get_error", Objects.requireNonNull(response.body()).string());
+
+                            } catch (JSONException e) {
+                                throw new RuntimeException(e);
                             }
                         }
                     }
+                }
             );
         } catch (Exception e) {
             Log.e("get_error", e.toString());
         }
+        syncRunnable = new Runnable() {
+            @Override
+            public void run() {
+                // 在这里调用SyncNote方法
+                if (!isSync)
+                    isSync = SyncNote();
+
+                // 再次调用postDelayed方法，实现定时任务
+                handler.postDelayed(this, 1000); // 60秒后再次执行
+            }
+        };
+
+        // 使用Handler的postDelayed方法来在60秒后执行Runnable
+        handler.postDelayed(syncRunnable, 1000);
     }
 
     @Override
@@ -189,6 +226,46 @@ public class NoteActivity extends AppCompatActivity {
         startActivityForResult(intent, REQUEST_AUDIO_GET);
     }
 
+    boolean SyncNote(){
+        // okhttp POST
+        SharedPreferences sharedPreferences = getSharedPreferences("user", 0);
+        int user_id = sharedPreferences.getInt("user_id", -1);
+        String title = titleText.getText().toString();
+        String content = mEditor.getHtml();
+        OkHttpClient client = new OkHttpClient();
+
+        RequestBody requestBody = RequestBody.create(MediaType.parse("application/json"), "{\"note_title\":\"" + title + "\",\"content\":\"" + content + "\", \"labels\":\"\"}");
+
+        Request request = new Request.Builder()
+                .url(API.API_root + "/note/"+user_id)
+                .patch(requestBody)
+                .build();
+
+        try {
+            client.newCall(request).enqueue(
+                    new Callback() {
+                        @Override
+                        public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                            Log.e("upload_error", e.toString());
+                        }
+
+                        @Override
+                        public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                            if (response.isSuccessful()) {
+                                Log.d("upload_success", Objects.requireNonNull(response.body()).string());
+                            } else {
+                                Log.e("upload_error", Objects.requireNonNull(response.body()).string());
+                            }
+                        }
+                    }
+            );
+        } catch (Exception e) {
+            Log.e("upload_error", e.toString());
+        }
+        return true;
+    }
+
+    @SuppressLint("Recycle")
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -196,9 +273,56 @@ public class NoteActivity extends AppCompatActivity {
             switch (requestCode) {
                 case REQUEST_IMAGE_GET:
                     if (data != null) {
+                        SharedPreferences sharedPreferences = getSharedPreferences("user", 0);
+                        int user_id = sharedPreferences.getInt("user_id", -1);
                         Uri uri = data.getData();
                         assert uri != null;
-                        mEditor.insertImage(uri.toString(), uri.toString() + "\" style=\"max-width:100%");
+                        String back_name = uri.toString().substring(uri.toString().lastIndexOf("."));
+
+                        // okhttp POST
+                        // Upload file to server
+                        OkHttpClient client = new OkHttpClient();
+                        RequestBody requestBody = new MultipartBody.Builder()
+                                .setType(MultipartBody.FORM)
+                                .addFormDataPart("file", "image.jpg",
+                                        RequestBody.create(MediaType.parse("image/*"), new File(Objects.requireNonNull(uri.getPath()).substring(4))))
+                                .addFormDataPart("backname", back_name)
+                                .build();
+
+                        Request request = new Request.Builder()
+                                .url(API.API_root + "/file/"+user_id)
+                                .post(requestBody)
+                                .build();
+                        try {
+                            client.newCall(request).enqueue(
+                                    new Callback() {
+                                        @Override
+                                        public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                                            Log.e("upload_error", e.toString());
+                                        }
+
+                                        @Override
+                                        public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                                            if (response.isSuccessful()) {
+                                                Log.d("upload_success", Objects.requireNonNull(response.body()).string());
+                                                JSONObject jsonObject = new JSONObject();
+                                                try {
+                                                    int file_id = jsonObject.getInt("file_id");
+                                                    String url = API.API_root + "/file/"+user_id+"/"+file_id + back_name;
+                                                    mEditor.insertImage(url, url + "\" style=\"max-width:100%");
+
+                                                } catch (JSONException e) {
+                                                    e.printStackTrace();
+                                                }
+                                            } else {
+                                                Log.e("upload_error", Objects.requireNonNull(response.body()).string());
+                                            }
+                                        }
+                                    }
+                            );
+                        } catch (Exception e) {
+                            Log.e("upload_error", e.toString());
+                        }
                     } else {
                         Toast.makeText(this, "图片损坏，请重新选择", Toast.LENGTH_SHORT).show();
                     }
@@ -207,7 +331,53 @@ public class NoteActivity extends AppCompatActivity {
                     if (data != null) {
                         Uri uri = data.getData();
                         assert uri != null;
-                        mEditor.insertVideo(uri.toString() + "\" style=\"max-width:100%", mEditor.getWidth());
+
+                        SharedPreferences sharedPreferences = getSharedPreferences("user", 0);
+                        int user_id = sharedPreferences.getInt("user_id", -1);
+                        String back_name = uri.toString().substring(uri.toString().lastIndexOf("."));
+                        // okhttp POST
+                        // Upload file to server
+                        OkHttpClient client = new OkHttpClient();
+                        RequestBody requestBody = new MultipartBody.Builder()
+                                .setType(MultipartBody.FORM)
+                                .addFormDataPart("file", "video.mp4",
+                                        RequestBody.create(MediaType.parse("video/*"), new File(uri.getPath().substring(4))))
+                                .addFormDataPart("backname", back_name)
+                                .build();
+
+                        Request request = new Request.Builder()
+                                .url(API.API_root + "/file/"+user_id)
+                                .post(requestBody)
+                                .build();
+                        try {
+                            client.newCall(request).enqueue(
+                                    new Callback() {
+                                        @Override
+                                        public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                                            Log.e("upload_error", e.toString());
+                                        }
+
+                                        @Override
+                                        public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                                            if (response.isSuccessful()) {
+                                                Log.d("upload_success", Objects.requireNonNull(response.body()).string());
+                                                JSONObject jsonObject = new JSONObject();
+                                                try {
+                                                    int file_id = jsonObject.getInt("file_id");
+                                                    String url = API.API_root + "/file/"+user_id+"/"+file_id + back_name;
+                                                    mEditor.insertVideo(url + "\" style=\"max-width:100%");
+                                                } catch (JSONException e) {
+                                                    e.printStackTrace();
+                                                }
+                                            } else {
+                                                Log.e("upload_error", Objects.requireNonNull(response.body()).string());
+                                            }
+                                        }
+                                    }
+                            );
+                        } catch (Exception e) {
+                            Log.e("upload_error", e.toString());
+                        }
                     } else {
                         Toast.makeText(this, "视频损坏，请重新选择", Toast.LENGTH_SHORT).show();
                     }
@@ -216,7 +386,54 @@ public class NoteActivity extends AppCompatActivity {
                     if (data != null) {
                         Uri uri = data.getData();
                         assert uri != null;
-                        mEditor.insertAudio(uri.toString() + "\" style=\"max-width:100%");
+
+                        SharedPreferences sharedPreferences = getSharedPreferences("user", 0);
+                        int user_id = sharedPreferences.getInt("user_id", -1);
+                        String back_name = uri.toString().substring(uri.toString().lastIndexOf("."));
+                        // okhttp POST
+                        // Upload file to server
+                        OkHttpClient client = new OkHttpClient();
+                        RequestBody requestBody = new MultipartBody.Builder()
+                                .setType(MultipartBody.FORM)
+                                .addFormDataPart("file", "audio.mp3",
+                                        RequestBody.create(MediaType.parse("audio/*"), new File(uri.getPath())))
+                                .addFormDataPart("backname", back_name)
+                                .build();
+
+                        Request request = new Request.Builder()
+                                .url(API.API_root + "/file/"+user_id)
+                                .post(requestBody)
+                                .build();
+
+                        try {
+                            client.newCall(request).enqueue(
+                                    new Callback() {
+                                        @Override
+                                        public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                                            Log.e("upload_error", e.toString());
+                                        }
+
+                                        @Override
+                                        public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                                            if (response.isSuccessful()) {
+                                                Log.d("upload_success", Objects.requireNonNull(response.body()).string());
+                                                JSONObject jsonObject = new JSONObject();
+                                                try {
+                                                    int file_id = jsonObject.getInt("file_id");
+                                                    String url = API.API_root + "/file/"+user_id+"/"+file_id + back_name;
+                                                    mEditor.insertAudio(url);
+                                                } catch (JSONException e) {
+                                                    e.printStackTrace();
+                                                }
+                                            } else {
+                                                Log.e("upload_error", Objects.requireNonNull(response.body()).string());
+                                            }
+                                        }
+                                    }
+                            );
+                        } catch (Exception e) {
+                            Log.e("upload_error", e.toString());
+                        }
                     } else {
                         Toast.makeText(this, "音频损坏，请重新选择", Toast.LENGTH_SHORT).show();
                     }
@@ -226,6 +443,8 @@ public class NoteActivity extends AppCompatActivity {
             }
         }
     }
+
+
 
     @Override
     protected void onStart() {
