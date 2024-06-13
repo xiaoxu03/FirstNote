@@ -3,6 +3,7 @@ package com.example.firstnote;
 import android.Manifest;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -29,6 +30,7 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -144,7 +146,17 @@ public class MainActivity extends AppCompatActivity {
                                                     Type type = new TypeToken<List<Note>>() {
                                                     }.getType();
                                                     noteList = gson.fromJson(array, type);
-                                                    Log.d("NoteFragment", "initMainNoteList: " + noteList.size());
+                                                    //Decode
+                                                    for (Note note : noteList) {
+                                                        Log.d("note", "source_title: " + note.getTitle());
+                                                        Log.d("note", "source_first_line: " + note.getFirst_line());
+                                                        note.setTitle(Uri.decode(note.getTitle()));
+                                                        Log.d("note", "decoded_: " + note.getTitle());
+                                                        note.setFirst_line(Uri.decode(note.getFirst_line()));
+                                                        Log.d("note", "decoded_first_line: " + note.getFirst_line());
+
+                                                    }
+                                                    Log.d("note", "initMainNoteList: " + noteList.size());
                                                     MainAdapter adapter = (MainAdapter) mainViewPager2.getAdapter();
                                                     if (adapter != null) {
                                                         NoteFragment fragment = (NoteFragment) adapter.getFragment(0);

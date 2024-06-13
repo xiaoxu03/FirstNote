@@ -3,6 +3,7 @@ package com.example.firstnote;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Handler;
 import android.util.Log;
 import android.view.View;
@@ -29,6 +30,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.net.URLEncoder;
 import java.util.List;
 import java.util.Objects;
 
@@ -71,9 +73,10 @@ public class NoteAdapter extends BaseQuickAdapter<Note, BaseViewHolder>{
                     SharedPreferences.Editor editor = sharedPreferences.edit();
                     okhttp3.OkHttpClient client = new okhttp3.OkHttpClient();
                     int user_id = sharedPreferences.getInt("user_id", -1);
+                    String encodedTitle = Uri.encode(item.title);
                     editor.apply();
                     okhttp3.Request request = new okhttp3.Request.Builder()
-                            .url(API.API_root + "/note/"+user_id+"/"+item.title)
+                            .url(API.API_root + "/note/"+user_id+"/"+encodedTitle)
                             .delete()
                             .build();
                     try {

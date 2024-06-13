@@ -1,9 +1,9 @@
 package com.example.firstnote;
 
 public class Note {
-    String title;
-    String first_line;
-    String labels;
+    String title = "";
+    String first_line = "";
+    String labels = "";
     boolean select = false;
     public boolean isSelect() {
         return select;

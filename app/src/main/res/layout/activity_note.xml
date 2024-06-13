@@ -6,6 +6,17 @@
     android:layout_height="match_parent"
     android:layout_gravity="center|left">
 
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/ai_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="40dp"
+        android:layout_marginBottom="100dp"
+        android:clickable="true"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:srcCompat="@drawable/robot_svgrepo_com" />
+
     <LinearLayout
         android:id="@+id/linearLayout"
         android:layout_width="wrap_content"
@@ -29,7 +40,7 @@
             android:layout_weight="1" />
 
         <ImageButton
-            android:id="@+id/imageButton2"
+            android:id="@+id/undo_button"
             android:layout_width="60dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -37,7 +48,7 @@
             app:srcCompat="@drawable/undo_left_round_svgrepo_com" />
 
         <ImageButton
-            android:id="@+id/imageButton3"
+            android:id="@+id/redo_button"
             android:layout_width="60dp"
             android:layout_height="60dp"
             android:layout_weight="1"
@@ -45,12 +56,12 @@
             android:src="@drawable/undo_right_round_svgrepo_com" />
 
         <ImageButton
-            android:id="@+id/imageButton4"
+            android:id="@+id/tag_button"
             android:layout_width="60dp"
             android:layout_height="60dp"
             android:layout_weight="1"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@drawable/check_svgrepo_com" />
+            android:src="@drawable/tag_svgrepo_com" />
     </LinearLayout>
 
     <jp.wasabeef.richeditor.RichEditor
@@ -62,7 +73,7 @@
         app:layout_constraintBottom_toTopOf="@+id/horizontalScrollView"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/title_text">
+        app:layout_constraintTop_toBottomOf="@+id/tag_recycler">
 
     </jp.wasabeef.richeditor.RichEditor>
 
@@ -83,20 +94,23 @@
                 android:id="@+id/insert_image_button"
                 android:layout_width="60dp"
                 android:layout_height="60dp"
-                app:srcCompat="@drawable/video" />
+                android:background="?attr/selectableItemBackgroundBorderless"
+                app:srcCompat="@drawable/image_square_svgrepo_com" />
 
             <ImageButton
                 android:id="@+id/insert_video_button"
                 android:layout_width="60dp"
                 android:layout_height="60dp"
-                app:srcCompat="@android:drawable/presence_video_online" />
+                android:background="?attr/selectableItemBackgroundBorderless"
+                app:srcCompat="@drawable/video_svgrepo_com" />
 
             <ImageButton
                 android:id="@+id/insert_audio_button"
                 android:layout_width="60dp"
                 android:layout_height="60dp"
                 android:layout_weight="1"
-                app:srcCompat="@android:drawable/presence_audio_online" />
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/audio_svgrepo_com" />
 
             <ImageButton
                 android:id="@+id/get_html"
@@ -119,5 +133,13 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/linearLayout" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/tag_recycler"
+        android:layout_width="0dp"
+        android:layout_height="30dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/title_text" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
