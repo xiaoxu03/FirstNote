@@ -16,6 +16,8 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.FileUtils;
 import android.os.Handler;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
@@ -67,7 +69,7 @@ public class NoteActivity extends AppCompatActivity {
     ImageButton undoButton;
     ImageButton tagButton;
     RichEditor mEditor;
-    TextView titleText;
+    EditText titleText;
     LinearLayout tagLayout;
     Note note;
     boolean isSync = true;
@@ -187,6 +189,60 @@ public class NoteActivity extends AppCompatActivity {
                 builder.show();
             }
         });
+
+        titleText.addTextChangedListener(
+            new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                    String formerTitle = note.getTitle();
+
+                    // delete note
+                    if (formerTitle != null) {
+                        // okhttp DELETE
+                        SharedPreferences sharedPreferences = getSharedPreferences("user", 0);
+                        SharedPreferences.Editor editor = sharedPreferences.edit();
+                        int user_id = sharedPreferences.getInt("user_id", -1);
+                        String encodedTitle = Uri.encode(formerTitle);
+                        editor.apply();
+                        OkHttpClient client = new OkHttpClient();
+                        Request request = new Request.Builder()
+                                .url(API.API_root + "/note/"+user_id+"/"+encodedTitle)
+                                .delete()
+                                .build();
+                        try {
+                            client.newCall(request).enqueue(
+                                    new Callback() {
+                                        @Override
+                                        public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                                            Log.e("delete_error", e.toString());
+                                        }
+
+                                        @Override
+                                        public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                                            if (response.isSuccessful()) {
+                                                Log.d("delete_success", Objects.requireNonNull(response.body()).string());
+                                            } else {
+                                                Log.e("delete_error", Objects.requireNonNull(response.body()).string());
+                                            }
+                                        }
+                                    }
+                            );
+                        } catch (Exception e) {
+                            Log.e("delete_error", e.toString());
+                        }
+                    }
+                }
+
+                @Override
+                public void onTextChanged(CharSequence s, int start, int before, int count) {
+                }
+
+                @Override
+                public void afterTextChanged(Editable s) {
+                    note.setTitle(titleText.getText().toString());
+                }
+            }
+        );
 
         ai_button.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -644,7 +700,7 @@ public class NoteActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-
+        handler.postDelayed(syncRunnable, 1000);
     }
     @Override
     protected void onPause() {
