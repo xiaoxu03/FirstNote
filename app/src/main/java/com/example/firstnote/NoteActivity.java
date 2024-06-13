@@ -5,7 +5,9 @@ import static android.os.Environment.getExternalStorageDirectory;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.ContentResolver;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -16,6 +18,7 @@ import android.os.FileUtils;
 import android.os.Handler;
 import android.util.Log;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.ImageButton;
 
 import androidx.annotation.NonNull;
@@ -38,6 +41,7 @@ import okio.ByteString;
 import okio.Okio;
 import okio.Source;
 
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -49,15 +53,22 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 public class NoteActivity extends AppCompatActivity {
     ImageButton insertVideoButton;
     ImageButton insertImageButton;
     ImageButton insertAudioButton;
+    ImageButton redoButton;
+    ImageButton undoButton;
+    ImageButton tagButton;
     ImageButton getHtmlButton;
     RichEditor mEditor;
     TextView titleText;
+    LinearLayout tagLayout;
+    Note note;
     boolean isSync = true;
     Handler handler = new Handler();
     Runnable syncRunnable;
@@ -77,13 +88,18 @@ public class NoteActivity extends AppCompatActivity {
         setContentView(R.layout.activity_note);
 
         Intent intent = getIntent();
-        String title = intent.getStringExtra("title");
-        assert title != null;
-        Log.d("title", title);
+        note = new Note(intent.getStringExtra("title"), "", "");
+
+        assert note.getTitle() != null;
+        Log.d("title", note.getTitle());
 
         insertImageButton = findViewById(R.id.insert_image_button);
         insertVideoButton = findViewById(R.id.insert_video_button);
         insertAudioButton = findViewById(R.id.insert_audio_button);
+        redoButton = findViewById(R.id.redo_button);
+        undoButton = findViewById(R.id.undo_button);
+        tagButton = findViewById(R.id.tag_button);
+        tagLayout = findViewById(R.id.tag_scroll_layout);
 
         mEditor = findViewById(R.id.editor);
         insertImageButton.setOnClickListener(new View.OnClickListener() {
@@ -112,7 +128,7 @@ public class NoteActivity extends AppCompatActivity {
 
         getHtmlButton = findViewById(R.id.get_html);
         titleText = findViewById(R.id.title_text);
-        titleText.setText(title);
+        titleText.setText(note.getTitle());
 
         getHtmlButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -122,11 +138,57 @@ public class NoteActivity extends AppCompatActivity {
             }
         });
 
+        redoButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mEditor.redo();
+            }
+        });
+
+        undoButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mEditor.undo();
+            }
+        });
+
+        tagButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // 添加标签
+                AlertDialog.Builder builder = new AlertDialog.Builder(NoteActivity.this);
+                final EditText label_input = new EditText(NoteActivity.this);
+                builder.setTitle("请输入标签");
+                builder.setView(label_input);
+                builder.setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        String label = label_input.getText().toString();
+                        note.addLabel(label);
+                        TextView labelView = new TextView(NoteActivity.this);
+                        labelView.setText(label);
+                        labelView.setBackgroundResource(R.drawable.label_bg);
+                        labelView.setPadding(10, 1, 10, 1);
+                        labelView.setTextColor(getResources().getColor(R.color.white));
+                        tagLayout.addView(labelView);
+                    }
+                });
+                builder.setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                });
+                builder.show();
+            }
+        });
+
+
         // okhttp GET
         SharedPreferences sharedPreferences = getSharedPreferences("user", 0);
         SharedPreferences.Editor editor = sharedPreferences.edit();
         okhttp3.OkHttpClient client = new okhttp3.OkHttpClient();
-        String encodedTitle = Uri.encode(title);
+        String encodedTitle = Uri.encode(note.getTitle());
 
         int user_id = sharedPreferences.getInt("user_id", -1);
         editor.apply();
@@ -153,12 +215,23 @@ public class NoteActivity extends AppCompatActivity {
 
                                 if (jsonObject.has("note_content")){
                                     String content = jsonObject.getString("note_content");
+                                    String labels = jsonObject.getString("labels");
                                     runOnUiThread(new Runnable() {
                                         @Override
                                         public void run() {
                                             String decodedContent = Uri.decode(content);
+                                            String decodedLabels = Uri.decode(labels);
                                             Log.d("note", decodedContent);
                                             mEditor.setHtml(decodedContent);
+                                            note.setLabels(decodedLabels);
+                                            for(String label: note.getLabelsList()){
+                                                TextView labelView = new TextView(NoteActivity.this);
+                                                labelView.setText(label);
+                                                labelView.setBackgroundResource(R.drawable.label_bg);
+                                                labelView.setPadding(10, 1, 10, 1);
+                                                labelView.setTextColor(getResources().getColor(R.color.white));
+                                                tagLayout.addView(labelView);
+                                            }
                                             isSync = false;
                                         }
                                     });
@@ -247,9 +320,11 @@ public class NoteActivity extends AppCompatActivity {
         if(content != null) {
             encodedContent = Uri.encode(content);
         }
+        String Labels = note.getLabels();
+        String encodedLabels = Uri.encode(Labels);
         OkHttpClient client = new OkHttpClient();
 
-        RequestBody requestBody = RequestBody.create(MediaType.parse("application/json"), "{\"title\":\"" + encodedTitle + "\",\"note_content\":\"" + encodedContent + "\", \"labels\":\"\"}");
+        RequestBody requestBody = RequestBody.create(MediaType.parse("application/json"), "{\"title\":\"" + encodedTitle + "\",\"note_content\":\"" + encodedContent + "\", \"labels\":\""+encodedLabels+"\"}");
 
         Request request = new Request.Builder()
                 .url(API.API_root + "/note/"+user_id)

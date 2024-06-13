@@ -1,5 +1,9 @@
 package com.example.firstnote;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 public class Note {
     String title = "";
     String first_line = "";
@@ -19,6 +23,13 @@ public class Note {
         return labels;
     }
 
+    public List<String> getLabelsList() {
+        List<String> labelList = new ArrayList<>();
+        String[] labelArray = labels.split("/");
+        Collections.addAll(labelList, labelArray);
+        return labelList;
+    }
+
     public void setSelect(boolean select) {
         this.select = select;
     }
@@ -35,19 +46,27 @@ public class Note {
         this.labels = labels;
     }
 
+    public void addLabel(String label) {
+        if (labels.isEmpty()) {
+            labels = label;
+        } else {
+            labels += "/" + label;
+        }
+    }
+
     public Note() {
     }
 
     public Note(String title, String first_line, String labels) {
         this.title = title;
         this.first_line = first_line;
-        this.labels = labels;
+        setLabels(labels);
     }
 
     public Note(String title, String first_line, String labels, boolean select) {
         this.title = title;
         this.first_line = first_line;
-        this.labels = labels;
+        setLabels(labels);
         this.select = select;
     }
 }

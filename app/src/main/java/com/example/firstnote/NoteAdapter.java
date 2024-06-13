@@ -13,6 +13,7 @@ import android.view.animation.AnimationUtils;
 import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -54,6 +55,14 @@ public class NoteAdapter extends BaseQuickAdapter<Note, BaseViewHolder>{
     protected void convert(@NonNull BaseViewHolder helper, Note item) {
         helper.setText(R.id.title_text, item.title);
         helper.setText(R.id.first_line_text, item.first_line);
+        for(String label: item.getLabelsList()){
+            TextView labelView = new TextView(mContext);
+            labelView.setText(label);
+            labelView.setBackgroundResource(R.drawable.label_bg);
+            labelView.setPadding(10, 1, 10, 1);
+            labelView.setTextColor(mContext.getResources().getColor(R.color.white));
+            ((ViewGroup)helper.getView(R.id.label_layout)).addView(labelView);
+        }
         helper.addOnClickListener(R.id.note_item);//添加item点击事件
         helper.addOnLongClickListener(R.id.note_item);//添加item长按事件
         helper.getView(R.id.delete_button).setOnClickListener(new View.OnClickListener() {

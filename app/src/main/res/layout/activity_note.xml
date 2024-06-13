@@ -73,7 +73,7 @@
         app:layout_constraintBottom_toTopOf="@+id/horizontalScrollView"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tag_recycler">
+        app:layout_constraintTop_toBottomOf="@+id/horizontalScrollView2">
 
     </jp.wasabeef.richeditor.RichEditor>
 
@@ -134,12 +134,21 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/linearLayout" />
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/tag_recycler"
+    <HorizontalScrollView
+        android:id="@+id/horizontalScrollView2"
         android:layout_width="0dp"
         android:layout_height="30dp"
+        android:layout_marginTop="1dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/title_text" />
+        app:layout_constraintTop_toBottomOf="@+id/title_text">
+
+        <LinearLayout
+            android:id="@+id/tag_scroll_layout"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:gravity="center|left"
+            android:orientation="horizontal" />
+    </HorizontalScrollView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

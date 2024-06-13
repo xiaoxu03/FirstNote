@@ -148,13 +148,9 @@ public class MainActivity extends AppCompatActivity {
                                                     noteList = gson.fromJson(array, type);
                                                     //Decode
                                                     for (Note note : noteList) {
-                                                        Log.d("note", "source_title: " + note.getTitle());
-                                                        Log.d("note", "source_first_line: " + note.getFirst_line());
                                                         note.setTitle(Uri.decode(note.getTitle()));
-                                                        Log.d("note", "decoded_: " + note.getTitle());
                                                         note.setFirst_line(Uri.decode(note.getFirst_line()));
-                                                        Log.d("note", "decoded_first_line: " + note.getFirst_line());
-
+                                                        note.setLabels(Uri.decode(note.getLabels()));
                                                     }
                                                     Log.d("note", "initMainNoteList: " + noteList.size());
                                                     MainAdapter adapter = (MainAdapter) mainViewPager2.getAdapter();
