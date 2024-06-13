@@ -112,12 +112,6 @@
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@drawable/audio_svgrepo_com" />
 
-            <ImageButton
-                android:id="@+id/get_html"
-                android:layout_width="60dp"
-                android:layout_height="60dp"
-                android:layout_weight="1"
-                app:srcCompat="@drawable/html_edit" />
         </LinearLayout>
     </HorizontalScrollView>
 

@@ -71,15 +71,5 @@
             app:layout_constraintTop_toTopOf="parent"
             app:srcCompat="@drawable/setting_gear_svgrepo_com" />
 
-        <ImageButton
-            android:id="@+id/folder_button"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/folder"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/settings_button"
-            app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/folder_svgrepo_com" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

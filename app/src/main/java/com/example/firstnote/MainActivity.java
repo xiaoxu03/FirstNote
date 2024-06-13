@@ -12,6 +12,7 @@ import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.graphics.Insets;
@@ -45,6 +46,9 @@ public class MainActivity extends AppCompatActivity {
     List<Note> noteList = new ArrayList<Note>();
     RefreshHeader refreshHeader;
     static final int GET_NOTE_LIST = 100;
+    public static final int REQUEST_NOTE = 910;
+
+    boolean need_flush = false;
 
     private final List<Fragment> fragments = new ArrayList<>();
     @Override
@@ -83,16 +87,6 @@ public class MainActivity extends AppCompatActivity {
         });
         tab.attach();
         getNoteList();
-
-        MainAdapter adapter = (MainAdapter) mainViewPager2.getAdapter();
-        if (adapter != null) {
-            NoteFragment fragment = (NoteFragment) adapter.getFragment(0);
-            if (fragment != null) {
-                // Call the method
-                // 获取refresh
-
-            }
-        }
     }
 
     public void getNoteList() {
@@ -186,6 +180,20 @@ public class MainActivity extends AppCompatActivity {
                 // Permission denied
                 Toast.makeText(this, "无法访问网络", Toast.LENGTH_SHORT).show();
             }
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (need_flush) {
+            getNoteList();
+            MainAdapter adapter = (MainAdapter) mainViewPager2.getAdapter();
+            assert adapter != null;
+            NoteFragment fragment = (NoteFragment) adapter.getFragment(0);
+            assert fragment != null;
+            fragment.flushNoteList();
+            need_flush = false;
         }
     }
 }

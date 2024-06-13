@@ -45,6 +45,8 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -64,7 +66,6 @@ public class NoteActivity extends AppCompatActivity {
     ImageButton redoButton;
     ImageButton undoButton;
     ImageButton tagButton;
-    ImageButton getHtmlButton;
     RichEditor mEditor;
     TextView titleText;
     LinearLayout tagLayout;
@@ -77,6 +78,10 @@ public class NoteActivity extends AppCompatActivity {
             Manifest.permission.READ_MEDIA_VIDEO,
             Manifest.permission.READ_MEDIA_AUDIO,
     };
+
+    void newLine(){
+        mEditor.setHtml(mEditor.getHtml()+ "<br>");
+    }
 
     static final int REQUEST_IMAGE_GET = 100;
     static final int REQUEST_VIDEO_GET = 101;
@@ -100,6 +105,15 @@ public class NoteActivity extends AppCompatActivity {
         undoButton = findViewById(R.id.undo_button);
         tagButton = findViewById(R.id.tag_button);
         tagLayout = findViewById(R.id.tag_scroll_layout);
+        FloatingActionButton ai_button = findViewById(R.id.ai_button);
+
+        ImageButton returnButton = findViewById(R.id.back_button);
+        returnButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish();
+            }
+        });
 
         mEditor = findViewById(R.id.editor);
         insertImageButton.setOnClickListener(new View.OnClickListener() {
@@ -126,17 +140,8 @@ public class NoteActivity extends AppCompatActivity {
             }
         });
 
-        getHtmlButton = findViewById(R.id.get_html);
         titleText = findViewById(R.id.title_text);
         titleText.setText(note.getTitle());
-
-        getHtmlButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String html = mEditor.getHtml();
-                Log.d("html", html);
-            }
-        });
 
         redoButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -171,6 +176,84 @@ public class NoteActivity extends AppCompatActivity {
                         labelView.setPadding(10, 1, 10, 1);
                         labelView.setTextColor(getResources().getColor(R.color.white));
                         tagLayout.addView(labelView);
+                    }
+                });
+                builder.setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                });
+                builder.show();
+            }
+        });
+
+        ai_button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // AI
+                AlertDialog.Builder builder = new AlertDialog.Builder(NoteActivity.this);
+                final EditText label_input = new EditText(NoteActivity.this);
+                builder.setTitle("请提问");
+                builder.setView(label_input);
+                builder.setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        newLine();
+                        String question = label_input.getText().toString() + mEditor.getHtml();
+                        String encodedQuestion = Uri.encode(question);
+                        // okhttp POST
+                        SharedPreferences sharedPreferences = getSharedPreferences("user", 0);
+                        int user_id = sharedPreferences.getInt("user_id", -1);
+                        OkHttpClient client = new OkHttpClient();
+                        MediaType JSON = MediaType.parse("application/json; charset=utf-8");
+                        String json = "{\n" +
+                                "    \"model\": \"gpt-4o\",\n" +
+                                "    \"messages\": [{\"role\": \"user\", \"content\": \""+encodedQuestion+"!\"}]\n" +
+                                "}";
+
+                        RequestBody body = RequestBody.create(JSON, json);
+
+                        Request request = new Request.Builder()
+                                .url("https://api.openai-proxy.org/v1/chat/completions")
+                                .post(body)
+                                .addHeader("Content-Type", "application/json")
+                                .addHeader("Authorization", "Bearer sk-1wutYZ12WY6s4teCwQvz5NzkK9GOIo8Pv0ZAAtEMyqw0CjJW")
+                                .build();
+                        try {
+                            client.newCall(request).enqueue(
+                                    new Callback() {
+                                        @Override
+                                        public void onFailure(@NonNull Call call, @NonNull IOException e) {
+                                            Log.e("ai_error", e.toString());
+                                        }
+
+                                        @Override
+                                        public void onResponse(@NonNull Call call, @NonNull Response response) throws IOException {
+                                            if (response.isSuccessful()) {
+                                                try {
+                                                    JSONObject jsonObject = new JSONObject(Objects.requireNonNull(response.body()).string());
+                                                    //get assistant reply
+                                                    String answer = jsonObject.getJSONArray("choices").getJSONObject(0).getJSONObject("message").getString("content");
+                                                    runOnUiThread(new Runnable() {
+                                                        @Override
+                                                        public void run() {
+
+                                                            mEditor.setHtml(mEditor.getHtml() + answer);
+                                                        }
+                                                    });
+                                                } catch (JSONException e) {
+                                                    e.printStackTrace();
+                                                }
+                                            } else {
+                                                Log.e("ai_error", Objects.requireNonNull(response.body()).string());
+                                            }
+                                        }
+                                    }
+                            );
+                        } catch (Exception e) {
+                            Log.e("ai_error", e.toString());
+                        }
                     }
                 });
                 builder.setNegativeButton("取消", new DialogInterface.OnClickListener() {
@@ -405,7 +488,7 @@ public class NoteActivity extends AppCompatActivity {
                                                     runOnUiThread(new Runnable() {
                                                         @Override
                                                         public void run() {
-                                                            mEditor.insertImage(url, url + "\" style=\"max-width:100%");
+                                                            mEditor.insertImage(url, url + "\" style=\"max-width:90%");
                                                         }
                                                     });
                                                 } catch (JSONException e) {
@@ -464,7 +547,7 @@ public class NoteActivity extends AppCompatActivity {
                                                     runOnUiThread(new Runnable() {
                                                         @Override
                                                         public void run() {
-                                                            mEditor.insertVideo(url + "\" style=\"max-width:100%");
+                                                            mEditor.insertVideo(url + "\" style=\"max-width:90%");
                                                         }
                                                     });
                                                 } catch (JSONException e) {
@@ -561,13 +644,13 @@ public class NoteActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-    }
 
+    }
     @Override
     protected void onPause() {
         super.onPause();
+        handler.removeCallbacks(syncRunnable);
     }
-
     @Override
     protected void onStop() {
         super.onStop();
@@ -577,6 +660,5 @@ public class NoteActivity extends AppCompatActivity {
     protected
     void onDestroy() {
         super.onDestroy();
-        handler.removeCallbacks(syncRunnable);
     }
 }

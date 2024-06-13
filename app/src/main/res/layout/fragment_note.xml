@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="match_parent">
 
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -20,11 +20,11 @@
 
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toBottomOf="@+id/search_input">
 
         <LinearLayout
             android:id="@+id/empty_text"
@@ -46,6 +46,7 @@
                 android:layout_marginTop="11dp"
                 android:text="@string/note_empty"
                 android:textSize="24sp" />
+
         </LinearLayout>
 
 
@@ -58,7 +59,9 @@
             <com.scwang.smart.refresh.header.ClassicsHeader
                 android:id="@+id/refresh_header"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content">
+
+            </com.scwang.smart.refresh.header.ClassicsHeader>
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/note_list"
@@ -69,4 +72,15 @@
         </com.scwang.smart.refresh.layout.SmartRefreshLayout>
 
     </RelativeLayout>
+
+    <EditText
+        android:id="@+id/search_input"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:ems="10"
+        android:inputType="text"
+        android:drawableLeft="@drawable/search_svgrepo_com"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -13,6 +13,7 @@ import android.view.animation.AnimationUtils;
 import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -45,7 +46,12 @@ public class NoteAdapter extends BaseQuickAdapter<Note, BaseViewHolder>{
     int mEditMode = STATE_DEFAULT;
     Runnable runnable;
     Handler handler = new Handler();
+    private MainActivity mainActivity; // Add this line
 
+    public NoteAdapter(int layoutResId, @Nullable List<Note> noteList, MainActivity mainActivity) { // Modify this line
+        super(layoutResId, noteList);
+        this.mainActivity = mainActivity; // Add this line
+    }
     public NoteAdapter(int layoutResId, @Nullable List<Note> noteList) {
         super(layoutResId, noteList);
     }
@@ -55,6 +61,8 @@ public class NoteAdapter extends BaseQuickAdapter<Note, BaseViewHolder>{
     protected void convert(@NonNull BaseViewHolder helper, Note item) {
         helper.setText(R.id.title_text, item.title);
         helper.setText(R.id.first_line_text, item.first_line);
+        LinearLayout label_layout = helper.getView(R.id.label_layout);
+        label_layout.removeAllViews();
         for(String label: item.getLabelsList()){
             TextView labelView = new TextView(mContext);
             labelView.setText(label);
@@ -122,6 +130,7 @@ public class NoteAdapter extends BaseQuickAdapter<Note, BaseViewHolder>{
                     Intent intent = new Intent(mContext, NoteActivity.class);
                     intent.putExtra("title", note.title);
                     mContext.startActivity(intent);
+                    mainActivity.need_flush = true;
                 }
             }
         });
